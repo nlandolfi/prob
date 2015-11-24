@@ -74,7 +74,7 @@ func main() {
 		return 0
 	}
 
-	log.Printf("Are X and Y independent? (E[XY] - E[X]E[Y] ?=? 0), %t", prob.Independent(u4, X, Y))
+	log.Printf("Are X and Y independent? (E[XY] - E[X]E[Y] ?=? 0), %t", prob.IndependentVariables(u4, X, Y))
 
 	e1 := prob.Binomial(2, 0.5)(0) == prob.Geometric(.5)(2)
 	e2 := prob.Geometric(0.5)(2) == prob.Uniform(4)(1)
@@ -83,4 +83,6 @@ func main() {
 	log.Printf("G(0.5)(2) = %f", prob.Geometric(0.5)(2))
 	log.Printf("U(4)(1) = %f", prob.Uniform(4)(1))
 	log.Printf("B(2, 0.5)(0) == G(.5)(2) == U(4)(1), %t", e1 && e2)
+
+	log.Printf("Multinomial(.5, .5)(2, 2) = %f", prob.Multinomial(.5, .5)(2, 2))
 }

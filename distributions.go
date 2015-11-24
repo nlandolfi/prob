@@ -11,6 +11,33 @@ func Binomial(n int64, p Probability) func(int64) Probability {
 	}
 }
 
+func Multinomial(probabilities ...Probability) func(...int) Probability {
+	return func(partition ...int) Probability {
+		assert(len(probabilities) == len(partition), "invalid partition")
+
+		sum := 0
+		for i := range partition {
+			sum += partition[i]
+		}
+
+		assert(sum != 0, "partition sum can't be zero")
+
+		num := Factorial(nint(int64(sum)))
+		den := nint(1)
+
+		for i := range partition {
+			den.Mul(den, Factorial(nint(int64(partition[i]))))
+		}
+
+		scale := 1.0
+		for i := range probabilities {
+			scale *= math.Pow(float64(probabilities[i]), float64(partition[i]))
+		}
+
+		return Probability(float64(num.Div(num, den).Int64()) * scale)
+	}
+}
+
 func Uniform(n int) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(1.0 / float64(n))
