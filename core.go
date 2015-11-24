@@ -2,6 +2,7 @@ package prob
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/nlandolfi/set"
 )
@@ -113,6 +114,7 @@ func (d *distribution) ProbabilityOf(o Outcome) Probability {
 
 // --- }}}
 
+// --- Distribution Properties {{{
 func Support(d Distribution) Probability {
 	p := Probability(0)
 
@@ -122,6 +124,20 @@ func Support(d Distribution) Probability {
 
 	return p
 }
+
+func FullySupported(d Distribution) bool {
+	return Support(d) == Certain
+}
+
+func Cardinality(d DiscreteDistribution) uint {
+	return d.Outcomes().Cardinality()
+}
+
+func Degenerate(d DiscreteDistribution) bool {
+	return Cardinality(d) == 1 && FullySupported(d)
+}
+
+// --- }}}
 
 // --- Events {{{
 
@@ -171,6 +187,51 @@ func Covariance(d Distribution, X, Y RandomVariable) float64 {
 
 func IndependentVariables(d Distribution, X, Y RandomVariable) bool {
 	return Covariance(d, X, Y) == 0
+}
+
+// --- }}}
+
+// --- Composition {{{
+
+func Compose(p, q DiscreteDistribution, alpha Probability) DiscreteDistribution {
+	assert(FullySupported(p), "first distribution is not fully supported")
+	assert(FullySupported(q), "second distribution is not fully supported")
+	assert(set.Equivalent(p.Domain(), q.Domain()), "distribution domains must be equivalent")
+
+	n := NewDiscreteDistribution(p.Domain())
+
+	for o := range n.Domain().Iter() {
+		cp := alpha*p.ProbabilityOf(o) + (1-alpha)*q.ProbabilityOf(o)
+		if cp == Impossible {
+			continue // don't bother supporting
+		}
+
+		n.AddOutcome(o, cp)
+	}
+
+	return n
+}
+
+// --- }}}
+
+// --- Simulation {{{
+func Simulate(d DiscreteDistribution) Outcome {
+	assert(FullySupported(d), "discrete distribution not fully supported")
+
+	f := Probability(rand.Float64())
+	p := Probability(0)
+
+	var last Outcome
+	for o := range d.Outcomes().Iter() {
+		p += d.ProbabilityOf(o)
+		last = o
+
+		if f < p {
+			return o
+		}
+	}
+
+	return last
 }
 
 // --- }}}
