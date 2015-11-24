@@ -27,6 +27,8 @@ type (
 		AddOutcome(Outcome, Probability)
 	}
 
+	Event set.Interface
+
 	RandomVariable func(Outcome) float64
 )
 
@@ -121,6 +123,26 @@ func Support(d Distribution) Probability {
 	return p
 }
 
+// --- Events {{{
+
+func ProbabilityOf(d Distribution, A Event) Probability {
+	sum := Impossible
+
+	for a := range A.Iter() {
+		sum += d.ProbabilityOf(a)
+	}
+
+	return sum
+}
+
+func IndependentEvents(d Distribution, A, B Event) bool {
+	return ProbabilityOf(d, set.Union(A, B)) == ProbabilityOf(d, A)*ProbabilityOf(d, B)
+}
+
+// --- }}}
+
+// --- Random Variables {{{
+
 func Moment(d Distribution, X RandomVariable, n int) float64 {
 	moment := func(o Outcome) float64 {
 		return math.Pow(X(o), float64(n))
@@ -147,6 +169,8 @@ func Covariance(d Distribution, X, Y RandomVariable) float64 {
 	return Expectation(d, func(o Outcome) float64 { return X(o) * Y(o) }) - Expectation(d, X)*Expectation(d, Y)
 }
 
-func Independent(d Distribution, X, Y RandomVariable) bool {
+func IndependentVariables(d Distribution, X, Y RandomVariable) bool {
 	return Covariance(d, X, Y) == 0
 }
+
+// --- }}}
