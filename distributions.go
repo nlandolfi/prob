@@ -6,7 +6,7 @@ import (
 )
 
 // Bernoulli represents a Bernoulli trial
-// { 1 with probability p, o with probability 1 - p }
+// { 1 with probability p, 0 with probability 1 - p }
 func Bernoulli(p Probability) func(k int) Probability {
 	return func(k int) Probability {
 		if k == 1 {
