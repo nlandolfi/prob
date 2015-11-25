@@ -133,9 +133,9 @@ func (d *distribution) ProbabilityOf(o Outcome) Probability {
 
 	if ok {
 		return p
-	} else {
-		return Impossible
 	}
+
+	return Impossible
 }
 
 // --- }}}
