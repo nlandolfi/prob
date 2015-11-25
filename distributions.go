@@ -11,9 +11,9 @@ func Bernoulli(p Probability) func(k int) Probability {
 	return func(k int) Probability {
 		if k == 1 {
 			return p
-		} else {
-			return 1 - p
 		}
+
+		return 1 - p
 	}
 }
 

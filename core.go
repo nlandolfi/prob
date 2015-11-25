@@ -241,6 +241,9 @@ func Compose(p, q DiscreteDistribution, alpha Probability) DiscreteDistribution 
 // --- }}}
 
 // --- Simulation {{{
+
+// Simulate simulates an experiment with the distribution
+// defined by the DiscreteDistribution
 func Simulate(d DiscreteDistribution) Outcome {
 	assert(FullySupported(d), "discrete distribution not fully supported")
 
