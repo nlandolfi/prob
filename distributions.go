@@ -5,12 +5,29 @@ import (
 	"math/big"
 )
 
+// Bernoulli represents a Bernoulli trial
+// { 1 with probability p, o with probability 1 - p }
+func Bernoulli(p Probability) func(k int) Probability {
+	return func(k int) Probability {
+		if k == 1 {
+			return p
+		} else {
+			return 1 - p
+		}
+	}
+}
+
+// A Binomial distribution. The number of successes in n independent trials
+// with a probability, p, of success in each trial.
+// (n choose k)(p)^(k)(1-p)^(n-k)
 func Binomial(n int64, p Probability) func(int64) Probability {
 	return func(k int64) Probability {
 		return Probability(float64(nint(0).Binomial(n, k).Int64()) * math.Pow(float64(p), float64(k)) * math.Pow(1-float64(p), float64(n-k)))
 	}
 }
 
+// A Multinomial distribution. The number of elements in each category
+// where the probability of being in category i is probabilities[i].
 func Multinomial(probabilities ...Probability) func(...int) Probability {
 	return func(partition ...int) Probability {
 		assert(len(probabilities) == len(partition), "invalid partition")
@@ -38,28 +55,36 @@ func Multinomial(probabilities ...Probability) func(...int) Probability {
 	}
 }
 
+// A Uniform distribution on the range [1, ..., n]
 func Uniform(n int) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(1.0 / float64(n))
 	}
 }
 
+// A Geometric distribution with parameter p. The probability it takes
+// k trials to see a success, where we find success with probability p
 func Geometric(p Probability) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(math.Pow(float64(Certain-p), float64(k-1)) * float64(p))
 	}
 }
 
+// A Poisson distribution with paramter mu. The probability of k successes
+// in infinite trials, or the expected number of occurrences in an interval
+// of time t of a randomly occuring process with rate mu per t.
 func Poisson(mu float64) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(math.Pow(math.E, -mu) * math.Pow(mu, float64(k)) / float64(Factorial(big.NewInt(int64(k))).Int64()))
 	}
 }
 
+// nint is a helper for big.NewInt
 func nint(i int64) *big.Int {
 	return big.NewInt(i)
 }
 
+// Factorial computes n!
 func Factorial(n *big.Int) *big.Int {
 	if n.Cmp(nint(0)) == 0 {
 		return big.NewInt(1)
@@ -70,12 +95,14 @@ func Factorial(n *big.Int) *big.Int {
 	return z.Mul(n, Factorial(i.Sub(n, nint(1))))
 }
 
+// Combintation comuptes (n choose k)
 func Combination(n, k *big.Int) *big.Int {
 	delta, z := nint(0), nint(0)
 	delta.Sub(n, k)
 	return z.Div(Factorial(n), z.Mul(Factorial(k), Factorial(delta)))
 }
 
+// Choose is an alias of Combination
 func Choose(n, k *big.Int) *big.Int {
 	return Combination(n, k)
 }
