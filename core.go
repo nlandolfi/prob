@@ -7,39 +7,65 @@ import (
 	"github.com/nlandolfi/set"
 )
 
+// --- Types {{{
 type (
+	// A Probability is an element of [0, 1]
 	Probability float64
 
+	// An Outcome simply is an element of a set,
+	// namely, the OutcomeSpace
 	Outcome set.Element
 
+	// An Outcomes list is a slice of set.Element
 	Outcomes []set.Element
 
+	// An OutcomeSpace is a set
 	OutcomeSpace set.Interface
 
+	// A Distribution is the interface for interacting with
+	// probability distribution. The domain is the universal set,
+	// the outcomes are the support.
 	Distribution interface {
 		Domain() set.Interface
 		Outcomes() set.Interface
 		ProbabilityOf(Outcome) Probability
 	}
 
+	// A DiscreteDistribution is the interface for a distribution
+	// we can programmatically manipulate. It inherits the interface
+	// of a general ProbabilityDistribution, and adds the ability to add
+	// outcomes.
 	DiscreteDistribution interface {
 		Distribution
 		Support() Outcomes
 		AddOutcome(Outcome, Probability)
 	}
 
+	// An Event is a set. As in probability theory, this set should
+	// be a subset of the outcome space. e.g., an event A ⊆ Ω
 	Event set.Interface
 
+	// A RandomVariable is defined to be a real valued function of an outcome
+	// of a random experiment.
 	RandomVariable func(Outcome) float64
 )
+
+// --- }}}
 
 // --- Probability (Modeling Uncertainty) {{{
 
 const (
+	// Impossible represents the probability that an outcome or event
+	// will never occur.
 	Impossible Probability = 0
-	Certain    Probability = 1
+
+	// Certain represents the probability that an outcome or event
+	// will certainly occur.
+	Certain Probability = 1
 )
 
+// Valid determines whether a Probability value is valid. All
+// probabilities must be on the inverval: [0, 1]
 func (p Probability) Valid() bool {
 	return p >= 0 && p <= 1
 }
@@ -48,6 +74,8 @@ func (p Probability) Valid() bool {
 
 // --- Discrete Distribution --- {{{
 
+// NewDiscreteDistribution constructs a discrete distribution over
+// the set d, provided as the domain of the distribution
 func NewDiscreteDistribution(d set.Interface) DiscreteDistribution {
 	return &distribution{
 		domain:   d,
@@ -56,6 +84,8 @@ func NewDiscreteDistribution(d set.Interface) DiscreteDistribution {
 	}
 }
 
+// NewUniformDiscrete constructs a discrete distribution over the
+// set domain. Each element is assigned a probability 1/Cardinality(domain)
 func NewUniformDiscrete(domain set.Interface) DiscreteDistribution {
 	d := NewDiscreteDistribution(domain)
 
@@ -68,6 +98,9 @@ func NewUniformDiscrete(domain set.Interface) DiscreteDistribution {
 	return d
 }
 
+// distribution structure serves as an implementation
+// of the DiscreteDistribution (and therefor implicitly
+// Distribution) interfaces
 type distribution struct {
 	domain   set.Interface
 	outcomes set.Interface
@@ -83,14 +116,7 @@ func (d *distribution) Outcomes() set.Interface {
 }
 
 func (d *distribution) Support() Outcomes {
-	o := make(Outcomes, len(d.support))
-
-	i := 0
-	for k := range d.support {
-		o[i] = k
-	}
-
-	return o
+	return d.outcomes.Elements()
 }
 
 func (d *distribution) AddOutcome(o Outcome, p Probability) {
