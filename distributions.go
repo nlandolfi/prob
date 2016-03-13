@@ -55,24 +55,30 @@ func Multinomial(probabilities ...Probability) func(...int) Probability {
 	}
 }
 
-// A Uniform distribution on the range [1, ..., n]
+// A Uniform distribution on the discrete range [1, 2, ..., n]
 func Uniform(n int) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(1.0 / float64(n))
 	}
 }
 
-// A Geometric distribution with parameter p. The probability it takes
-// k trials to see a success, where we find success with probability p
+// A Geometric distribution with parameter p.
+//
+// Recall that the geometric distribution models the probability that
+// it takes k trials until we observe a success, where probability of a
+// success in p
 func Geometric(p Probability) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(math.Pow(float64(Certain-p), float64(k-1)) * float64(p))
 	}
 }
 
-// A Poisson distribution with paramter mu. The probability of k successes
-// in infinite trials, or the expected number of occurrences in an interval
-// of time t of a randomly occuring process with rate mu per t.
+// A Poisson distribution with paramter mu.
+//
+// Recall that the poisson distribution models the probability that we
+// observe k successes in infinite trials; In other words, it models
+// the expected number of occurrences in an interval of time t of a randomly
+// occuring process with rate mu per t.
 func Poisson(mu float64) func(int) Probability {
 	return func(k int) Probability {
 		return Probability(math.Pow(math.E, -mu) * math.Pow(mu, float64(k)) / float64(Factorial(big.NewInt(int64(k))).Int64()))
