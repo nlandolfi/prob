@@ -8,15 +8,16 @@ import (
 )
 
 // --- Types {{{
+
 type (
-	// A Probability is an element of [0, 1]
+	// A Probability is a real number on the interval [0, 1]
 	Probability float64
 
-	// An Outcome is an element of a set,
-	// namely the Outcome Space
+	// An Outcome is an element of a set, namely
+	// the Outcome Space (often denoted Ω)
 	Outcome set.Element
 
-	// An Outcomes list is a slice of set.Element
+	// Outcomes is a typed slice of set.Element
 	Outcomes []set.Element
 
 	// An OutcomeSpace is a set
@@ -27,11 +28,11 @@ type (
 	// for that distribution, the outcomes are the support.
 	Distribution interface {
 		// Domain is the set which defines the possible outcomes of
-		// a Distribution. This is the Outcome Space
-		Domain() set.Interface
+		// a Distribution. This is the Outcome Space.
+		Domain() set.AbstractInterface
 
 		// Outcomes is the set of Outcomes in the Domain which occur
-		// with a non-zero probability
+		// with a non-zero probability.
 		Outcomes() set.Interface
 
 		// ProbabilityOf returns the probability of a given Outcome
@@ -58,7 +59,7 @@ type (
 
 	// A RandomVariable is defined to be a real valued function of an outcome
 	// of a random experiment. It is neither random, nor variable. It is a
-	// fixed function. The Outcome introduces the stochasticity.
+	// fixed function. The stochasic Outcome is the random component.
 	RandomVariable func(Outcome) float64
 )
 
@@ -83,7 +84,7 @@ func (p Probability) Valid() bool {
 }
 
 // epsilon is the acceptable floating point error
-var epsilon = 0.00001
+const epsilon = 0.00001
 
 // equiv determines whether two float64s are equivalent to each
 // other with respect to epsilon
@@ -97,7 +98,7 @@ func equiv(f1, f2 float64) bool {
 
 // NewDiscreteDistribution constructs a discrete distribution over
 // the set d, provided as the domain of the distribution
-func NewDiscreteDistribution(d set.Interface) DiscreteDistribution {
+func NewDiscreteDistribution(d set.AbstractInterface) DiscreteDistribution {
 	return &distribution{
 		domain:   d,
 		outcomes: set.New(),
@@ -112,7 +113,7 @@ func NewUniformDiscrete(domain set.Interface) DiscreteDistribution {
 
 	individualSupport := Certain / Probability(domain.Cardinality())
 
-	for o := range domain.Iter() {
+	for _, o := range domain.Elements() {
 		d.AddOutcome(o, individualSupport)
 	}
 
@@ -123,12 +124,12 @@ func NewUniformDiscrete(domain set.Interface) DiscreteDistribution {
 // of the DiscreteDistribution (and therefore implicitly
 // Distribution) interfaces
 type distribution struct {
-	domain   set.Interface
+	domain   set.AbstractInterface
 	outcomes set.Interface
 	support  map[Outcome]Probability
 }
 
-func (d *distribution) Domain() set.Interface {
+func (d *distribution) Domain() set.AbstractInterface {
 	return d.domain
 }
 
@@ -178,7 +179,7 @@ func (d *distribution) ProbabilityOf(o Outcome) Probability {
 func Support(d Distribution) Probability {
 	p := Probability(0.0)
 
-	for o := range d.Outcomes().Iter() {
+	for _, o := range d.Outcomes().Elements() {
 		p += d.ProbabilityOf(o)
 	}
 
@@ -216,7 +217,7 @@ func Degenerate(d DiscreteDistribution) bool {
 func ProbabilityOf(d Distribution, A Event) Probability {
 	sum := Impossible
 
-	for a := range A.Iter() {
+	for _, a := range A.Elements() {
 		sum += d.ProbabilityOf(a)
 	}
 
@@ -252,7 +253,7 @@ func Moment(d Distribution, X RandomVariable, n int) float64 {
 func Expectation(d Distribution, X RandomVariable) float64 {
 	exp := 0.0
 
-	for o := range d.Outcomes().Iter() {
+	for _, o := range d.Outcomes().Elements() {
 		exp += X(o) * float64(d.ProbabilityOf(o))
 	}
 
@@ -296,11 +297,11 @@ func IndependentVariables(d Distribution, X, Y RandomVariable) bool {
 func Compose(p, q DiscreteDistribution, alpha Probability) DiscreteDistribution {
 	assert(FullySupported(p), "first distribution is not fully supported")
 	assert(FullySupported(q), "second distribution is not fully supported")
-	assert(set.Equivalent(p.Domain(), q.Domain()), "domains of both distributions must be equivalent")
+	//assert(set.Equivalent(p.Domain(), q.Domain()), "domains of both distributions must be equivalent")
 
 	n := NewDiscreteDistribution(p.Domain())
 
-	for o := range n.Domain().Iter() {
+	for _, o := range n.Outcomes().Elements() {
 		cp := alpha*p.ProbabilityOf(o) + (1-alpha)*q.ProbabilityOf(o)
 		if cp == Impossible {
 			continue // don't bother supporting
@@ -329,7 +330,7 @@ func Simulate(d DiscreteDistribution) Outcome {
 	p := Probability(0)
 
 	var last Outcome
-	for o := range d.Outcomes().Iter() {
+	for _, o := range d.Outcomes().Elements() {
 		p += d.ProbabilityOf(o)
 		last = o
 
